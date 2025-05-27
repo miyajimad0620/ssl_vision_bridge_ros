@@ -1,0 +1,21 @@
+name: Add Tag
+
+run-name: Add Tag:${{ github.ref_name }}(${{ github.event.head_commit.message }})
+
+on:
+ push:
+   branches:
+     - main
+
+jobs:
+  add-tag:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Colcon Test
+        uses: TRAPS-RoboCup/traps-github-action/ros2-add-tag@main
+        with:
+          token: ${{ secrets.PAT }}
