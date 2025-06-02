@@ -1,0 +1,11 @@
+<launch>
+  <arg name="namespace" default=""/>
+  <arg name="exec_mode" default="compose" description="compose or process or load"/>
+  <arg name="container_name" default="phoenix_container"/>
+  <arg name="thread_num" default="2"/>
+  <arg name="use_sim_time" default="false"/>
+  <arg name="log_level" default="info"/>
+
+  <include file="$(find-pkg-share ssl_vision_bridge_ros)/launch/rviz.launch.xml"/>
+  <node pkg="ssl_vision_bridge_ros" exec="wrapper_async_bridge_node" name="ssl_vision_bridge" output="screen"/>
+</launch>

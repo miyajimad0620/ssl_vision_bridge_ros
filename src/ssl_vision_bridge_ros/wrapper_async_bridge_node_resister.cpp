@@ -13,6 +13,6 @@
 // limitations under the License.
 
 #include "rclcpp_components/register_node_macro.hpp"
-#include "ssl_vision_bridge_ros/bridge_node.hpp"
+#include "ssl_vision_bridge_ros/wrapper_async_bridge_node.hpp"
 
-RCLCPP_COMPONENTS_REGISTER_NODE(ssl_vision_bridge_ros::BridgeNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(ssl_vision_bridge_ros::WrapperAsyncBridgeNode)

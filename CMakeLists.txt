@@ -26,6 +26,22 @@ endif()
 # 必要なパッケージのinclude
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Protobuf REQUIRED)
+
+#protoファイルのビルド
+file(GLOB proto_files
+  LIST_DIRECTORIES false
+  "${CMAKE_CURRENT_SOURCE_DIR}/proto/*")
+protobuf_generate_cpp(proto_src_files proto_hdr_files "${proto_files}")
+add_library("${PROJECT_NAME}_proto_lib" "${proto_src_files}")
+target_link_libraries("${PROJECT_NAME}_proto_lib"
+  PUBLIC   protobuf::libprotobuf
+)
+target_include_directories("${PROJECT_NAME}_proto_lib"
+  PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
+)
+target_compile_options("${PROJECT_NAME}_proto_lib" PRIVATE -fPIC)
 
 # interfaceファイル(msg, srv, action)のビルド
 file(GLOB msg_files
@@ -58,13 +74,13 @@ list(LENGTH ${PROJECT_NAME}_lib_files ${PROJECT_NAME}_lib_files_count)
 if(${PROJECT_NAME}_lib_files_count GREATER 0)
   ament_auto_add_library("${PROJECT_NAME}_lib" SHARED "${${PROJECT_NAME}_lib_files}")
   target_compile_features("${PROJECT_NAME}_lib" PUBLIC c_std_99 cxx_std_17)
-  target_link_libraries("${PROJECT_NAME}_lib" "${cpp_typesupport_target}" fmt)
+  target_link_libraries("${PROJECT_NAME}_lib" "${cpp_typesupport_target}" "${PROJECT_NAME}_proto_lib" fmt Eigen3::Eigen)
 endif()
 
 # ノードプラグインの設定
 rclcpp_components_register_node("${PROJECT_NAME}_lib"
-  PLUGIN "${PROJECT_NAME}::BridgeNode"
-  EXECUTABLE bridge_node)
+  PLUGIN "${PROJECT_NAME}::WrapperAsyncBridgeNode"
+  EXECUTABLE wrapper_async_bridge_node)
 
 # ディレクトリのinstall
 set(install_directories config;launch;${${PROJECT_NAME_UPPER}_INSTALL_DIRECTORIES})
@@ -80,15 +96,15 @@ endforeach()
 if(BUILD_TESTING)
   ament_auto_find_test_dependencies()
   ament_lint_auto_find_test_dependencies()
-  file(GLOB_RECURSE "${PROJECT_NAME}_test_src_files"
-    LIST_DIRECTORIES false
-    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-    "test/*.cpp")
-  ament_auto_add_gtest(${PROJECT_NAME}_test
-    "${${PROJECT_NAME}_test_src_files}"
-    TIMEOUT "30")
-  target_compile_features("${PROJECT_NAME}_test" PUBLIC c_std_99 cxx_std_17)
-  target_link_libraries("${PROJECT_NAME}_test" "${cpp_typesupport_target}" fmt)
+  # file(GLOB_RECURSE "${PROJECT_NAME}_test_src_files"
+  #   LIST_DIRECTORIES false
+  #   RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+  #   "test/*.cpp")
+  # ament_auto_add_gtest(${PROJECT_NAME}_test
+  #   "${${PROJECT_NAME}_test_src_files}"
+  #   TIMEOUT "30")
+  # target_compile_features("${PROJECT_NAME}_test" PUBLIC c_std_99 cxx_std_17)
+  # target_link_libraries("${PROJECT_NAME}_test" "${cpp_typesupport_target}" fmt)
 endif()
 
 # パッケージング

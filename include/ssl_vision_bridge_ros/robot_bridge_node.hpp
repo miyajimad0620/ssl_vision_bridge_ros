@@ -12,29 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SSL_VISION_BRIDGE_ROS__EXAMPLE_NODE_HPP_
-#define SSL_VISION_BRIDGE_ROS__EXAMPLE_NODE_HPP_
+#ifndef SSL_VISION_BRIDGE_ROS__ROBOT_BRIDGE_NODE_HPP_
+#define SSL_VISION_BRIDGE_ROS__ROBOT_BRIDGE_NODE_HPP_
 
 #include <deque>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "./messages_robocup_ssl_detection.pb.h"
 #include "fmt/format.h"
-#include "rclcpp/node.hpp"
-// #include "ssl_vision_bridge_ros/visibility.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
+#include "rclcpp/node.hpp"
+#include "ssl_vision_bridge_ros/robot_to_msg.hpp"
+#include "ssl_vision_bridge_ros/visibility.hpp"
 
 namespace ssl_vision_bridge_ros
 {
 
-class BridgeSubNode : public rclcpp::Node
+class RobotBridgeNode : public rclcpp::Node
 {
 public:
-  static constexpr auto kDefaultNodeName = "ssl_vision_bridge";
+  RCLCPP_SMART_PTR_DEFINITIONS(RobotBridgeNode)
 
-  // SSL_VISION_BRIDGE_ROS_PUBLIC
-  inline BridgeSubNode(
+  static constexpr auto kDefaultNodeName = "ssl_vision_robot_bridge";
+
+  SSL_VISION_BRIDGE_ROS_PUBLIC
+  inline RobotBridgeNode(
     const std::string & node_name, const std::string & node_namespace,
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions())
   : rclcpp::Node(node_name, node_namespace, node_options)
@@ -42,23 +47,33 @@ public:
     this->init();
   }
 
-  // SSL_VISION_BRIDGE_ROS_PUBLIC
-  explicit inline BridgeSubNode(
+  SSL_VISION_BRIDGE_ROS_PUBLIC
+  explicit inline RobotBridgeNode(
     const std::string & node_name, const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions())
-  : BridgeSubNode(node_name, "", node_options)
+  : RobotBridgeNode(node_name, "", node_options)
   {
   }
 
-  // SSL_VISION_BRIDGE_ROS_PUBLIC
-  explicit inline BridgeSubNode(const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions())
-  : BridgeSubNode(kDefaultNodeName, "", node_options)
+  SSL_VISION_BRIDGE_ROS_PUBLIC
+  explicit inline RobotBridgeNode(const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions())
+  : RobotBridgeNode(kDefaultNodeName, "", node_options)
   {
   }
 
-  inline BridgeSubNode(rclcpp::Node & node, const std::string & sub_namespace)
+  SSL_VISION_BRIDGE_ROS_PUBLIC
+  inline RobotBridgeNode(rclcpp::Node & node, const std::string & sub_namespace)
   : rclcpp::Node(node, sub_namespace)
   {
     this->init();
+  }
+
+  void bridge(const SSL_DetectionRobot ssl_detection_robot)
+  {
+    auto pose_msg = std::make_unique<PoseMsg>();
+    pose_msg->header.stamp = this->now();
+    pose_msg->header.frame_id = frame_id_;
+    pose_msg->pose = to_msg(ssl_detection_robot);
+    vision_pose_pub_->publish(std::move(pose_msg));
   }
 
 private:
@@ -82,12 +97,13 @@ private:
     }
 
     // declare parameter
-    this->declare_parameter("string", "node default");
+    frame_id_ = this->declare_parameter(
+      this->get_sub_namespace() + ".frame_id",
+      this->get_parameter_or<std::string>("frame_id", "map"));
   }
 
-  void bridge()
-  {
-  }
+  // parameters
+  std::string frame_id_;
 
   // pub/sub
   rclcpp::Publisher<PoseMsg>::SharedPtr vision_pose_pub_;
@@ -95,4 +111,4 @@ private:
 
 }  // namespace ssl_vision_bridge_ros
 
-#endif  // SSL_VISION_BRIDGE_ROS__EXAMPLE_NODE_HPP_
+#endif  // SSL_VISION_BRIDGE_ROS__ROBOT_BRIDGE_NODE_HPP_

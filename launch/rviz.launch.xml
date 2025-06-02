@@ -1,0 +1,5 @@
+<launch>
+  <arg name="rviz_file" default="$(find-pkg-share ssl_vision_bridge_ros)/config/rviz.rviz" />
+
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(var rviz_file)"/>
+</launch>
